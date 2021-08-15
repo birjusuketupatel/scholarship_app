@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width = device-width, initial-scale = 1">
+    <title>SRI Scholarship | {{ title }}</title>
+  </head>
+
+  <body>
+    <header>
+      SRI
+      <a href="{{ url_for('index') }}">Home</a>
+      <a href="{{ url_for('login') }}">Login</a>
+    </header>
+
+    {% block content %}
+    {% endblock %}
+  </body>
+</html>
