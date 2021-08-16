@@ -9,6 +9,9 @@ from flask_login import LoginManager
 app = Flask(__name__)
 app.config.from_object(Config)
 
+#sets jinja extension for break statement
+app.jinja_env.add_extension('jinja2.ext.loopcontrols')
+
 #initializes database and migration
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h1>Log In</h1>
+  <h1>New Account</h1>
 
   <form action="" method="post" novalidate>
     {{ form.hidden_tag() }}
@@ -11,8 +11,4 @@
       {{ component|safe }}
     {% endfor %}
   </form>
-
-  <div>
-    New User? <a href="{{ url_for('register') }}">Create an Account</a>
-  </div>
 {% endblock %}
