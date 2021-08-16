@@ -2,7 +2,7 @@ from app import app, login_manager
 from flask import render_template, url_for, redirect
 from app.forms import LoginForm
 from app.models import User
-from flask_login import login_user
+from flask_login import login_user, logout_user, login_required
 
 #home page
 @app.route("/")
@@ -22,3 +22,11 @@ def login():
         return redirect(url_for("index"))
 
     return render_template("login.html", title="Log In", form=form)
+
+#logout page
+@app.route("/logout", methods=["GET", "POST"])
+def logout():
+    #logs out user
+    #instantly redirects them to login page
+    logout_user()
+    return redirect(url_for("login"))
