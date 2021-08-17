@@ -1,6 +1,7 @@
 from app import db, login_manager
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
+from sqlalchemy.sql import expression
 
 #table of users
 #inherits UserMixin, contains default implementatios
@@ -12,6 +13,7 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String(120))
     last_name = db.Column(db.String(120))
     password_hash = db.Column(db.String(128))
+    is_admin = db.Column(db.Boolean, server_default=expression.false(), nullable=False)
 
     #gets user id
     #required by LoginManager
