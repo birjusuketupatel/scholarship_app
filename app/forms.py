@@ -1,4 +1,4 @@
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm, RecaptchaField
 from wtforms import StringField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, ValidationError, Email, EqualTo
 from wtforms.widgets import PasswordInput
@@ -34,6 +34,7 @@ class RegistrationForm(FlaskForm):
     password = StringField("Password", validators=[DataRequired()], widget=PasswordInput(hide_value=False))
     confirm_password = StringField("Confirm Password", validators=[DataRequired(),
     EqualTo("password", message="Must be identical to password.")], widget=PasswordInput(hide_value=False))
+    recaptcha = RecaptchaField()
     submit = SubmitField("Create Account")
 
     #checks that email is unique

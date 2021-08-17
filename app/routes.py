@@ -5,12 +5,15 @@ from app.forms import LoginForm, RegistrationForm
 from app.models import User
 from flask_login import login_user, logout_user, login_required
 from wtforms import StringField, BooleanField, SubmitField
+from app import mail
+from flask_mail import Message
 
 #home page
 @app.route("/")
 @app.route("/index")
 @login_required
 def index():
+
     return render_template("index.html", title="Home")
 
 #log in page
@@ -61,7 +64,8 @@ def register():
 
     #builds form based on custom template for each field
     field_to_template = {"StringField": "_stringfield.html",
-                       "SubmitField": "_submitfield.html"}
+                       "SubmitField": "_submitfield.html",
+                       "RecaptchaField": "_recaptchafield.html"}
     field_to_error = {"StringField": "_fielderror.html"}
 
     components = render_fields(form, field_to_template, field_to_error)

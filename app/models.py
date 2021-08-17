@@ -14,18 +14,25 @@ class User(UserMixin, db.Model):
     last_name = db.Column(db.String(120))
     password_hash = db.Column(db.String(128))
     is_admin = db.Column(db.Boolean, server_default=expression.false(), nullable=False)
+    is_confirmed = db.Column(db.Boolean, server_default=expression.false(), nullable=False)
 
     #gets user id
     #required by LoginManager
     def get_id(self):
-           return (self.user_id)
+        return (self.user_id)
 
     #password is stored as hash for security
     def set_password(self, password):
         self.password_hash = generate_password_hash(password, 'pbkdf2:sha256', 16)
+        db.session.commit()
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    #marks that a user's email is confirmed
+    def confirm(self):
+        self.is_confirmed = True
+        db.session.commit()
 
     def __repr__(self):
         return "<User user_id={}, email={}>".format(self.user_id, self.email)
