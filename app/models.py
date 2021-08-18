@@ -4,7 +4,7 @@ from flask_login import UserMixin
 from sqlalchemy.sql import expression
 
 #table of users
-#inherits UserMixin, contains default implementatios
+#inherits UserMixin, contains default implementations
 #of methods required by LoginManager
 class User(UserMixin, db.Model):
     #columns in table

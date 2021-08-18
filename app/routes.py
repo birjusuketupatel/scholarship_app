@@ -7,6 +7,7 @@ from app.token import generate_confirmation_token, check_token
 from flask_login import current_user, login_user, logout_user, login_required
 from wtforms import StringField, BooleanField, SubmitField
 from app.email import send_email
+import os
 
 #home page
 @app.route("/")
