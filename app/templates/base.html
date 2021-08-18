@@ -14,9 +14,22 @@
       {% if current_user.is_anonymous %}
         <a href="{{ url_for('login') }}">Log In</a>
       {% else %}
+        <a href="{{ url_for('profile') }}">My Profile</a>
         <a href="{{ url_for('logout') }}">Log Out</a>
       {% endif %}
     </header>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul>
+          {% for message in messages %}
+            <li>
+              {{ message|safe }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
 
     {% block content %}
     {% endblock %}

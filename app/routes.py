@@ -1,18 +1,20 @@
 from app import app, login_manager, db
-from flask import render_template, url_for, redirect, request
+from flask import render_template, url_for, redirect, request, flash
 from werkzeug.urls import url_parse
 from app.forms import LoginForm, RegistrationForm
 from app.models import User
-from flask_login import login_user, logout_user, login_required
+from app.token import generate_confirmation_token, check_token
+from flask_login import current_user, login_user, logout_user, login_required
 from wtforms import StringField, BooleanField, SubmitField
-from app import mail
-from flask_mail import Message
+from app.email import send_email
 
 #home page
 @app.route("/")
 @app.route("/index")
 @login_required
 def index():
+    if not current_user.is_confirmed:
+        flash("Your email is not confirmed.")
 
     return render_template("index.html", title="Home")
 
@@ -60,6 +62,14 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
+        #generates verification token for user's email
+        #emails url to user
+        token = generate_confirmation_token(new_user.email)
+        confirm_url = url_for("confirm", token=token, _external=True)
+        body = render_template("confirmation_email.html", confirm_url=confirm_url)
+        subject = "Confirm Your Email"
+        send_email(new_user.email, subject, body)
+
         return redirect(url_for("login"))
 
     #builds form based on custom template for each field
@@ -70,7 +80,29 @@ def register():
 
     components = render_fields(form, field_to_template, field_to_error)
 
-    return render_template("register.html", title="New Account", form = form, components=components)
+    return render_template("register.html", title="New Account", form=form, components=components)
+
+#profile page
+@app.route("/profile", methods=["GET", "POST"])
+@login_required
+def profile():
+    return render_template("profile.html", title=current_user.first_name)
+
+#resends confirmation email
+@app.route("/resend", methods=["GET", "POST"])
+@login_required
+def resend():
+    #generates new verification token
+    #resends verification email
+    token = generate_confirmation_token(current_user.email)
+    confirm_url = url_for("confirm", token=token, _external=True)
+    body = render_template("confirmation_email.html", confirm_url=confirm_url)
+    subject = "Confirm Your Email"
+    send_email(current_user.email, subject, body)
+
+    flash("New confirmation email sent.")
+
+    return redirect(url_for("profile"))
 
 #log out page
 @app.route("/logout", methods=["GET", "POST"])
@@ -79,6 +111,28 @@ def logout():
     #instantly redirects them to login page
     logout_user()
     return redirect(url_for("login"))
+
+#email confirmation page
+@app.route("/confirm/<token>", methods=["GET", "POST"])
+@login_required
+def confirm(token):
+    email = check_token(token)
+
+    if not email:
+        flash("Confirmation link is invalid or expired.")
+        return redirect(url_for("index"))
+
+    user = User.query.filter_by(email=email).first_or_404()
+
+    if user.is_confirmed:
+        flash("Email is already confirmed.")
+    else:
+        user.is_confirmed = True
+        db.session.add(user)
+        db.session.commit()
+        flash("Email has been confirmed.")
+
+    return redirect(url_for("index"))
 
 #given a form, map of field type to field template,
 #and map of field type to error template

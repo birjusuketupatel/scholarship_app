@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Hello {{ current_user.first_name }} {{ current_user.last_name }}</h1>
+
+  <p>
+    Email: {{ current_user.email }}
+    {% if not current_user.is_confirmed %}
+      <p>
+        Your email is not confirmed.
+        <br>
+        Log into your email and click on the confirmation link.
+        <br>
+        <a href="{{ url_for('resend') }}">Resend Link</a>
+      <p>
+    {% endif %}
+  </p>
+{% endblock %}
