@@ -42,3 +42,18 @@ class RegistrationForm(FlaskForm):
         user = User.query.filter_by(email=email.data).first()
         if user is not None:
             raise ValidationError("Email is registered to another account.")
+
+class ChangeEmailForm(FlaskForm):
+    email = StringField("New Email", validators=[DataRequired(), Email()])
+    submit = SubmitField("Set New Email")
+
+    def __init__(self, original_email, *args, **kwargs):
+        super(ChangeEmailForm, self).__init__(*args, **kwargs)
+        self.original_email = original_email
+
+    def validate_email(self, email):
+        #if there is a change in email, make sure new email is not in database
+        if email.data != self.original_email:
+            user = User.query.filter_by(email=self.email.data).first()
+            if user is not None:
+                raise ValidationError("This email is registered to another account.")

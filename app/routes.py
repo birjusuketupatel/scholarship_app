@@ -1,7 +1,7 @@
 from app import app, login_manager, db
 from flask import render_template, url_for, redirect, request, flash
 from werkzeug.urls import url_parse
-from app.forms import LoginForm, RegistrationForm
+from app.forms import LoginForm, RegistrationForm, ChangeEmailForm
 from app.models import User
 from app.token import generate_confirmation_token, check_token
 from flask_login import current_user, login_user, logout_user, login_required
@@ -38,13 +38,8 @@ def login():
 
         return redirect(next_page)
 
-    #builds form based on custom template for each field
-    field_to_template = {"StringField": "_stringfield.html",
-                       "BooleanField": "_booleanfield.html",
-                       "SubmitField": "_submitfield.html"}
-    field_to_error = {"StringField": "_fielderror.html"}
-
-    components = render_fields(form, field_to_template, field_to_error)
+    #builds components of form
+    components = render_fields(form)
 
     return render_template("login.html", title="Log In", form=form, components=components)
 
@@ -63,23 +58,12 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        #generates verification token for user's email
-        #emails url to user
-        token = generate_confirmation_token(new_user.email)
-        confirm_url = url_for("confirm", token=token, _external=True)
-        body = render_template("confirmation_email.html", confirm_url=confirm_url)
-        subject = "Confirm Your Email"
-        send_email(new_user.email, subject, body)
+        send_verification_email(new_user.email)
 
         return redirect(url_for("login"))
 
-    #builds form based on custom template for each field
-    field_to_template = {"StringField": "_stringfield.html",
-                       "SubmitField": "_submitfield.html",
-                       "RecaptchaField": "_recaptchafield.html"}
-    field_to_error = {"StringField": "_fielderror.html"}
-
-    components = render_fields(form, field_to_template, field_to_error)
+    #builds components of form
+    components = render_fields(form)
 
     return render_template("register.html", title="New Account", form=form, components=components)
 
@@ -89,18 +73,35 @@ def register():
 def profile():
     return render_template("profile.html", title=current_user.first_name)
 
+#edit profile page
+@app.route("/edit_profile", methods=["GET", "POST"])
+@login_required
+def edit_profile():
+    #creates change forms
+    email_form = ChangeEmailForm(current_user.email)
+
+    #on submit, updates email and resends confirmation email
+    if email_form.validate_on_submit():
+        if email_form.email.data != current_user.email:
+            current_user.email = email_form.email.data
+            current_user.is_confirmed = False
+            db.session.commit()
+            send_verification_email(current_user.email)
+            flash("Email successfully updated to " + current_user.email + ".")
+    elif request.method == "GET":
+        #sets default to current email
+        email_form.email.data = current_user.email
+
+    #builds and renders forms
+    email_components = render_fields(email_form)
+
+    return render_template("edit_profile.html", title=current_user.first_name, email_form=email_form, email_components=email_components)
+
 #resends confirmation email
 @app.route("/resend", methods=["GET", "POST"])
 @login_required
 def resend():
-    #generates new verification token
-    #resends verification email
-    token = generate_confirmation_token(current_user.email)
-    confirm_url = url_for("confirm", token=token, _external=True)
-    body = render_template("confirmation_email.html", confirm_url=confirm_url)
-    subject = "Confirm Your Email"
-    send_email(current_user.email, subject, body)
-
+    send_verification_email(current_user.email)
     flash("New confirmation email sent.")
 
     return redirect(url_for("profile"))
@@ -135,10 +136,24 @@ def confirm(token):
 
     return redirect(url_for("index"))
 
-#given a form, map of field type to field template,
-#and map of field type to error template
-#returns a list of rendered html
-def render_fields(form, field_to_template, field_to_error):
+#sends verification email
+def send_verification_email(email):
+    #generates new verification token
+    #sends verification email
+    token = generate_confirmation_token(email)
+    confirm_url = url_for("confirm", token=token, _external=True)
+    body = render_template("confirmation_email.html", confirm_url=confirm_url)
+    subject = "Confirm Your Email"
+    send_email(email, subject, body)
+
+#given a form, returns a list of rendered html
+def render_fields(form):
+    field_to_template = {"StringField": "_stringfield.html",
+                       "SubmitField": "_submitfield.html",
+                       "BooleanField": "_booleanfield.html",
+                       "RecaptchaField": "_recaptchafield.html"}
+    field_to_error = {"StringField": "_fielderror.html"}
+
     components = []
     for field in form:
         field_type = type(field).__name__

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Edit Profile:</h1>
+
+  <div>
+    <div>
+      <!-- renders email form from components -->
+      <form action="" method="post" novalidate>
+        {{ email_form.hidden_tag() }}
+
+        <!-- adds pre-rendered components to page -->
+        {% for component in email_components %}
+          {{ component|safe }}
+        {% endfor %}
+      </form>
+    </div>
+  </div>
+{% endblock %}
